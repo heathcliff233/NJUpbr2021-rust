@@ -1,20 +1,22 @@
 use rayt::{
     camera::Camera,
-    color::write_color,
     hittable::{HitRecord, Hittable},
     hittable_list::HittableList,
     material::{Material, Scatter},
     ray::Ray,
     sphere::Sphere,
-    utils::INFINITY,
+    utils::{INFINITY, clamp},
     vec3::{unit_vector, Color, Point3, Vec3},
 };
 
+use rayon::prelude::*;
+
 #[macro_use]
 extern crate rayt;
+#[macro_use]
+extern crate itertools;
 
-
-fn ray_color(r: &Ray, world: &dyn Hittable, depth: usize) -> Color {
+fn ray_color(r: &Ray, world: &HittableList, depth: usize) -> Color {
     let mut rec = HitRecord::new(Material::new_lambertian(Color::zero()));
     if depth <= 0 {
         return Color::new(0.0, 0.0, 0.0);
@@ -81,12 +83,41 @@ fn random_scene() -> HittableList {
     world
 }
 
+fn render(cam: &Camera, world: &HittableList) -> Vec<Pixel> {
+    let pix_coord: Vec<(u32,u32)> = iproduct!(0..IMAGE_HEIGHT, 0..IMAGE_WIDTH).collect();
+    let img: Vec<Pixel> = pix_coord.par_iter().map(|(row, col)| simu(*row, *col, cam, world)).collect();
+    img
+}
+
+fn simu(row: u32, col: u32, cam: &Camera, world: &HittableList) -> Pixel {
+    let pixel_color = (1..=SAMPLES_PER_PIXEL)
+        .map(|_| {
+            let u = (col as f64 + random_double!()) / (IMAGE_WIDTH - 1) as f64;
+            let v = 1.0-(row as f64 + random_double!()) / ( IMAGE_HEIGHT - 1) as f64;
+            ray_color(&cam.get_ray(u, v), world, MAX_DEPTH)
+        })
+        .fold(Color::default(), |sum, c| sum + c);
+    //write_color(pixel_color, 20);
+    let scale = 1.0 / 10.0 as f64;
+    let get_color = |c| (255.999 * clamp(f64::sqrt(scale * c), 0.0, 0.999)) as u32;
+    let r = get_color(pixel_color.x);
+    let g = get_color(pixel_color.y);
+    let b = get_color(pixel_color.z);
+    Pixel {r, g, b}
+}
+
+pub struct Pixel {
+    r: u32,
+    g: u32,
+    b: u32,
+}
+const ASPECT_RATIO: f64 = 16.0 / 9.0;
+const IMAGE_WIDTH: u32 = 1200;
+const IMAGE_HEIGHT: u32 = ((IMAGE_WIDTH as f64) / ASPECT_RATIO) as u32;
+const SAMPLES_PER_PIXEL: usize = 10;
+const MAX_DEPTH: usize = 50;
 fn main() {
-    const ASPECT_RATIO: f64 = 16.0 / 9.0;
-    const IMAGE_WIDTH: u32 = 1200;
-    const IMAGE_HEIGHT: u32 = ((IMAGE_WIDTH as f64) / ASPECT_RATIO) as u32;
-    const SAMPLES_PER_PIXEL: usize = 10;
-    const MAX_DEPTH: usize = 50;
+
 
     println!("P3");
     println!("{} {}", IMAGE_WIDTH, IMAGE_HEIGHT);
@@ -111,6 +142,12 @@ fn main() {
         0.0,
     );
 
+    let img: Vec<Pixel> = render(&cam, &world);
+    img.iter().for_each(|it| {
+        println!("{} {} {}", it.r, it.g, it.b);
+    });
+    //println!("{}", img.len());
+    /*
     for j in (0..IMAGE_HEIGHT).rev() {
         eprint!("\rScanlines remaining: {} ", j);
 
@@ -125,6 +162,7 @@ fn main() {
             write_color(pixel_color, SAMPLES_PER_PIXEL);
         }
     }
+    */
 
     eprintln!("\nDone.");
 }

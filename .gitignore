@@ -1,5 +1,6 @@
 *.ppm
-
 target/*
+result/*
+Cargo.lock
 # Idea files
 .idea/*

@@ -6,7 +6,13 @@ use crate::{
 };
 
 pub trait Scatter {
-    fn scatter(self, r_in: &Ray, rec: HitRecord) -> Option<(Ray, Color)>;
+    fn scatter(
+        self,
+        r_in: &Ray,
+        rec: &HitRecord,
+        attenuation: &mut Color,
+        scattered: &mut Ray,
+    ) -> bool;
 }
 
 #[derive(Copy, Clone)]
@@ -31,11 +37,17 @@ impl Material {
 }
 
 impl Scatter for Material {
-    fn scatter(self, r_in: &Ray, rec: HitRecord) -> Option<(Ray, Color)> {
+    fn scatter(
+        self,
+        r_in: &Ray,
+        rec: &HitRecord,
+        attenuation: &mut Color,
+        scattered: &mut Ray,
+    ) -> bool {
         match self {
-            Material::Lambertian(m) => m.scatter(r_in, rec),
-            Material::Metal(m) => m.scatter(r_in, rec),
-            Material::Dielectric(m) => m.scatter(r_in, rec),
+            Material::Lambertian(m) => m.scatter(r_in, rec, attenuation, scattered),
+            Material::Metal(m) => m.scatter(r_in, rec, attenuation, scattered),
+            Material::Dielectric(m) => m.scatter(r_in, rec, attenuation, scattered),
         }
     }
 }
@@ -52,11 +64,17 @@ impl Lambertian {
 }
 
 impl Scatter for Lambertian {
-    fn scatter(self, _r_in: &Ray, rec: HitRecord) -> Option<(Ray, Color)> {
+    fn scatter(
+        self,
+        _r_in: &Ray,
+        rec: &HitRecord,
+        attenuation: &mut Color,
+        scattered: &mut Ray,
+    ) -> bool {
         let scatter_direction = rec.normal + random_unit_vector();
-        let scattered = Ray::new(rec.p, scatter_direction);
-        let attenuation = self.albedo;
-        Some((scattered, attenuation))
+        *scattered = Ray::new(rec.p, scatter_direction, 0.0);
+        *attenuation = self.albedo;
+        true
     }
 }
 
@@ -76,15 +94,17 @@ impl Metal {
 }
 
 impl Scatter for Metal {
-    fn scatter(self, r_in: &Ray, rec: HitRecord) -> Option<(Ray, Color)> {
+    fn scatter(
+        self,
+        r_in: &Ray,
+        rec: &HitRecord,
+        attenuation: &mut Color,
+        scattered: &mut Ray,
+    ) -> bool {
         let reflected = reflect(unit_vector(r_in.direction), rec.normal);
-        let scattered = Ray::new(rec.p, reflected + self.fuzz * random_in_unit_sphere());
-        let attenuation = self.albedo;
-        if dot(&scattered.direction, &rec.normal) > 0.0 {
-            Some((scattered, attenuation))
-        } else {
-            None
-        }
+        *scattered = Ray::new(rec.p, reflected + self.fuzz * random_in_unit_sphere(), 0.0);
+        *attenuation = self.albedo;
+        dot(&scattered.direction, &rec.normal) > 0.0
     }
 }
 
@@ -100,8 +120,14 @@ impl Dielectric {
 }
 
 impl Scatter for Dielectric {
-    fn scatter(self, r_in: &Ray, rec: HitRecord) -> Option<(Ray, Color)> {
-        let attenuation = Color::from([1.0, 1.0, 1.0]);
+    fn scatter(
+        self,
+        r_in: &Ray,
+        rec: &HitRecord,
+        attenuation: &mut Color,
+        scattered: &mut Ray,
+    ) -> bool {
+        *attenuation = Color::ones();
         let etai_over_etat = if rec.front_face {
             1.0 / self.ref_idx
         } else {
@@ -110,17 +136,16 @@ impl Scatter for Dielectric {
         let unit_direction = unit_vector(r_in.direction);
         let cos_theta = f64::min(dot(&-unit_direction, &rec.normal), 1.0);
         let sin_theta = f64::sqrt(1.0 - cos_theta.powi(2));
-        let scattered = if etai_over_etat * sin_theta > 1.0
+        *scattered = if etai_over_etat * sin_theta > 1.0
             || random_double!() < schlick(cos_theta, etai_over_etat)
         {
             let reflected = reflect(unit_direction, rec.normal);
-            Ray::new(rec.p, reflected)
+            Ray::new(rec.p, reflected, 0.0)
         } else {
             let refracted = refract(unit_direction, rec.normal, etai_over_etat);
-            Ray::new(rec.p, refracted)
+            Ray::new(rec.p, refracted, 0.0)
         };
-
-        Some((scattered, attenuation))
+        true
     }
 }
 

@@ -1,7 +1,7 @@
 use rayt::{
     camera::Camera,
     color::write_color,
-    hittable::Hittable,
+    hittable::{HitRecord, Hittable},
     hittable_list::HittableList,
     material::{Material, Scatter},
     ray::Ray,
@@ -13,33 +13,26 @@ use rayt::{
 #[macro_use]
 extern crate rayt;
 
-fn ray_color(mut r: Ray, world: &HittableList, depth: usize) -> Color {
-    if depth == 0 {
-        return Color::default();
+
+fn ray_color(r: &Ray, world: &dyn Hittable, depth: usize) -> Color {
+    let mut rec = HitRecord::new(Material::new_lambertian(Color::zero()));
+    if depth <= 0 {
+        return Color::new(0.0, 0.0, 0.0);
     }
-
-    let mut r_color = Color::from([1.0, 1.0, 1.0]);
-
-    for _ in 0..depth {
-        match world.hit(&r, 0.001, INFINITY) {
-            Some(rec) => match rec.material.scatter(&r, rec) {
-                Some((scattered, attenuation)) => {
-                    r = scattered;
-                    r_color *= attenuation;
-                }
-                None => return Color::default(),
-            },
-            None => {
-                let unit_direction = unit_vector(r.direction);
-                let t = 0.5 * (unit_direction.y + 1.0);
-                r_color *=
-                    (1.0 - t) * Color::from([1.0, 1.0, 1.0]) + t * Color::from([0.5, 0.7, 1.0]);
-                break;
-            }
+    if world.hit(&r, 0.001, INFINITY, &mut rec) {
+        let mut scattered = Ray::new(Point3::zero(), Vec3::zero(), 0.0);
+        let mut attenuation = Color::zero();
+        if rec
+            .material
+            .scatter(r, &rec, &mut attenuation, &mut scattered)
+        {
+            return attenuation * ray_color(&scattered, world, depth - 1);
         }
+        return Color::zero();
     }
-
-    r_color
+    let unit_direction = unit_vector(r.direction);
+    let t = 0.5 * (unit_direction.y + 1.0);
+    return (1.0 - t) * Color::ones() + t * Color::new(0.5, 0.7, 1.0);
 }
 
 fn random_scene() -> HittableList {
@@ -114,6 +107,8 @@ fn main() {
         ASPECT_RATIO,
         aperture,
         dist_to_focus,
+        0.0,
+        0.0,
     );
 
     for j in (0..IMAGE_HEIGHT).rev() {
@@ -124,7 +119,7 @@ fn main() {
                 .map(|_| {
                     let u = (i as f64 + random_double!()) / (IMAGE_WIDTH - 1) as f64;
                     let v = (j as f64 + random_double!()) / (IMAGE_HEIGHT - 1) as f64;
-                    ray_color(cam.get_ray(u, v), &world, MAX_DEPTH)
+                    ray_color(&cam.get_ray(u, v), &world, MAX_DEPTH)
                 })
                 .fold(Color::default(), |sum, c| sum + c);
             write_color(pixel_color, SAMPLES_PER_PIXEL);

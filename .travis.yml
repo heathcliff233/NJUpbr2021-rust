@@ -1,8 +1,10 @@
 language: rust
+arch: amd64
+os: linux
 rust: 1.50.0
 cache: cargo
 script:
   - cargo test
   - cargo build --release
   - mkdir result
-  - ./target/release/one_weekend > result/one_weekend.ppm
+  - time ./target/release/one_weekend > result/one_weekend.ppm

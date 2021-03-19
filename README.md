@@ -10,3 +10,12 @@ weekend](https://raytracing.github.io/books/RayTracingInOneWeekend.html) .
 Core Features:
 * Parallelism enabled by the fantastic Rust crate `rayon`.
 * Convert source pixels of a logo image to a rendered one in 3D space.
+
+Usage:
+* `cargo build --release`
+* save logo to assets/base.png, run `python3 proc.py`. note that opencv-python 
+and numpy packages are desired.
+* `mkdir result && time ./target/release/one_weekend > result/one_weekend.ppm`
+  for book one weekend, and `time ./target/release/custom_img > result/nju.ppm`
+  for customized logo. 
+  

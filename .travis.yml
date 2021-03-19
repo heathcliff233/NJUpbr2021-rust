@@ -8,3 +8,4 @@ script:
   - cargo build --release
   - mkdir result
   - time ./target/release/one_weekend > result/one_weekend.ppm
+  - time ./target/release/custom_img > result/nju.ppm

@@ -1,10 +1,9 @@
 use rayt::{
     camera::Camera,
-    hittable::{HitRecord, Hittable},
+    hittable::{HitRecord, Hittable, Shape},
     hittable_list::HittableList,
     material::{Material, Scatter},
     ray::Ray,
-    sphere::Sphere,
     utils::{INFINITY, clamp},
     vec3::{unit_vector, Color, Point3, Vec3},
 };
@@ -40,7 +39,7 @@ fn ray_color(r: &Ray, world: &HittableList, depth: usize) -> Color {
 fn random_scene() -> HittableList {
     let mut world = HittableList::default();
     let ground_material = Material::new_lambertian(Color::from([0.5, 0.5, 0.5]));
-    world.add(Sphere::new(
+    world.add(Shape::new_sphere(
         Point3::from([0.0, -1000.0, 0.0]),
         1000.0,
         ground_material,
@@ -66,19 +65,19 @@ fn random_scene() -> HittableList {
                 } else {
                     Material::new_dielectric(1.5)
                 };
-                world.add(Sphere::new(center, 0.2, sphere_material));
+                world.add(Shape::new_sphere(center, 0.2, sphere_material));
             }
         }
     }
 
     let material_1 = Material::new_dielectric(1.5);
-    world.add(Sphere::new(Point3::from([0.0, 1.0, 0.0]), 1.0, material_1));
+    world.add(Shape::new_sphere(Point3::from([0.0, 1.0, 0.0]), 1.0, material_1));
 
     let material_2 = Material::new_lambertian(Color::from([0.4, 0.2, 0.1]));
-    world.add(Sphere::new(Point3::from([-4.0, 1.0, 0.0]), 1.0, material_2));
+    world.add(Shape::new_sphere(Point3::from([-4.0, 1.0, 0.0]), 1.0, material_2));
 
     let material_3 = Material::new_metal(Color::from([0.7, 0.6, 0.5]), 0.0);
-    world.add(Sphere::new(Point3::from([4.0, 1.0, 0.0]), 1.0, material_3));
+    world.add(Shape::new_sphere(Point3::from([4.0, 1.0, 0.0]), 1.0, material_3));
 
     world
 }

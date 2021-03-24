@@ -205,6 +205,10 @@ pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
     v - 2.0 * dot(&v, &n) * n
 }
 
+pub fn identity(a1: Vec3, a2: Vec3, a3: Vec3) -> f64 {
+    - dot(&cross(a1, a2), &a3)
+}
+
 pub fn refract(uv: Vec3, n: Vec3, etai_over_etat: f64) -> Vec3 {
     let cos_theta = dot(&-uv, &n);
     let r_out_parallel = etai_over_etat * (uv + cos_theta * n);

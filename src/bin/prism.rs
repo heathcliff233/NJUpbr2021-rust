@@ -9,7 +9,7 @@ use rayt::{
 };
 
 use rayon::prelude::*;
-use image::GenericImageView;
+//use image::GenericImageView;
 
 #[macro_use]
 extern crate rayt;
@@ -37,6 +37,7 @@ fn ray_color(r: &Ray, world: &HittableList, depth: usize) -> Color {
     return (1.0 - t) * Color::ones() + t * Color::new(0.5, 0.7, 1.0);
 }
 
+/*
 fn read_image() -> HittableList {
     let mut world = HittableList::default();
     let ground_material = Material::new_metal(Color::from([0.5, 0.5, 0.5]), 0.0);
@@ -60,6 +61,40 @@ fn read_image() -> HittableList {
             }
         }
     }
+    world
+}
+*/
+
+fn prism() -> HittableList {
+    let mut world = HittableList::default();
+    let ground_material = Material::new_metal(Color::from([0.7, 0.2, 0.1]), 0.7);
+    //let ground_material = Material::new_lambertian(Color::from([0.5, 0.5, 0.5]));
+    /*
+    world.add(Shape::new_sphere(
+        Point3::from([0.0, -1000.0, 0.0]),
+        1000.0,
+        ground_material,
+    ));
+    */
+    world.add(Shape::new_triangle(Point3::from([1000.0,0.0,0.0]),Point3::from([0.0,0.0,-1000.0]),Point3::from([0.0,0.0,1000.0]),ground_material));
+    world.add(Shape::new_triangle(Point3::from([0.0,0.0,-1000.0]),Point3::from([-1000.0,0.0,0.0]),Point3::from([0.0,0.0,1000.0]),ground_material));
+    //let prism_mat= Material::new_dielectric(2.5);
+    let prism_mat = Material::new_metal(Color::from([0.5, 0.5, 0.5]), 0.2);
+    //let prism_mat = Material::new_lambertian(Color::from([0.9,0.1,0.1]));
+    let p1 = Point3::from([2.0,0.0,0.0]);
+    let p2 = Point3::from([2.0,2.0,0.0]);
+    let p3 = Point3::from([0.0,2.0,0.0]);
+    let p4 = Point3::from([0.0,0.0,0.0]);
+    let p5 = Point3::from([0.0,0.0,2.0]);
+    let p6 = Point3::from([0.0,2.0,2.0]);
+    world.add(Shape::new_triangle(p2,p1,p4,prism_mat));
+    world.add(Shape::new_triangle(p3,p2,p4,prism_mat));
+    world.add(Shape::new_triangle(p3,p6,p2,prism_mat));
+    world.add(Shape::new_triangle(p1,p5,p4,prism_mat));
+    world.add(Shape::new_triangle(p3,p4,p6,prism_mat));
+    world.add(Shape::new_triangle(p4,p5,p6,prism_mat));
+    world.add(Shape::new_triangle(p1,p6,p5,prism_mat));
+    world.add(Shape::new_triangle(p1,p2,p6,prism_mat));
     world
 }
 
@@ -92,7 +127,7 @@ pub struct Pixel {
     b: u32,
 }
 const ASPECT_RATIO: f64 = 16.0 / 9.0;
-const IMAGE_WIDTH: u32 = 1600;
+const IMAGE_WIDTH: u32 = 1200;
 const IMAGE_HEIGHT: u32 = ((IMAGE_WIDTH as f64) / ASPECT_RATIO) as u32;
 const SAMPLES_PER_PIXEL: usize = 20;
 const MAX_DEPTH: usize = 50;
@@ -102,9 +137,10 @@ fn main() {
     println!("{} {}", IMAGE_WIDTH, IMAGE_HEIGHT);
     println!("255");
 
-    let world = read_image();
-    let lookfrom = Point3::from([22.0, 4.0, 22.0]);
-    let lookat = Point3::from([0.0,2.0,-4.0]);
+    //let world = read_image();
+    let world = prism();
+    let lookfrom = Point3::from([8.0, 2.5, -5.0]);
+    let lookat = Point3::from([0.0,0.5,0.0]);
     let vup = Vec3::from([0.0, 1.0, 0.0]);
     let dist_to_focus = 10.0;
     let aperture = 0.1;

@@ -1,16 +1,15 @@
 use crate::{
-    hittable::{HitRecord, Hittable},
+    hittable::{HitRecord, Hittable, Shape},
     ray::Ray,
-    sphere::Sphere,
 };
 
 #[derive(Default)]
 pub struct HittableList {
-    objects: Vec<Sphere>,
+    objects: Vec<Shape>,
 }
 
 impl HittableList {
-    pub fn add(&mut self, object: Sphere) {
+    pub fn add(&mut self, object: Shape) {
         self.objects.push(object);
     }
 }

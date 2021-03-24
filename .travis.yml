@@ -9,3 +9,4 @@ script:
   - mkdir result
   - time ./target/release/one_weekend > result/one_weekend.ppm
   - time ./target/release/custom_img > result/nju.ppm
+  - time ./target/release/prism > result/prism.ppm

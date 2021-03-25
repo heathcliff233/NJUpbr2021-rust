@@ -14,6 +14,9 @@ use rayon::prelude::*;
 extern crate rayt;
 #[macro_use]
 extern crate itertools;
+extern crate ply_rs;
+use ply_rs::ply;
+use ply_rs::parser;
 
 fn ray_color(r: &Ray, world: &HittableList, depth: usize) -> Color {
     let mut rec = HitRecord::new(Material::new_lambertian(Color::zero()));
@@ -36,49 +39,52 @@ fn ray_color(r: &Ray, world: &HittableList, depth: usize) -> Color {
     return (1.0 - t) * Color::ones() + t * Color::new(0.5, 0.7, 1.0);
 }
 
-fn random_scene() -> HittableList {
-    let mut world = HittableList::default();
-    let ground_material = Material::new_lambertian(Color::from([0.5, 0.5, 0.5]));
-    world.add(Shape::new_sphere(
-        Point3::from([0.0, -1000.0, 0.0]),
-        1000.0,
-        ground_material,
-    ));
+struct Face {
+    vertex_index: Vec<i32>,
+}
 
-    for a in -11..11 {
-        for b in -11..11 {
-            let choose_mat = random_double!();
-            let center = Point3::from([
-                a as f64 + 0.9 * random_double!(),
-                0.2,
-                b as f64 + 0.9 * random_double!(),
-            ]);
-
-            if (center - Point3::from([4.0, 0.2, 0.0])).length() > 0.9 {
-                let sphere_material = if choose_mat < 0.8 {
-                    let albedo = Color::random(None) * Color::random(None);
-                    Material::new_lambertian(albedo)
-                } else if choose_mat < 0.95 {
-                    let albedo = Color::random(Some([0.5, 1.0]));
-                    let fuzz = random_double!(0.0, 0.5);
-                    Material::new_metal(albedo, fuzz)
-                } else {
-                    Material::new_dielectric(1.5)
-                };
-                world.add(Shape::new_sphere(center, 0.2, sphere_material));
-            }
+impl ply::PropertyAccess for Face {
+    fn new() -> Self {
+        Face {
+            vertex_index: Vec::new(),
         }
     }
+    fn set_property(&mut self, key: String, property: ply::Property) {
+        match (key.as_ref(), property) {
+            ("vertex_index", ply::Property::ListInt(vec)) => self.vertex_index = vec,
+            (k, _) => panic!("Face: Unexpected key/value combination: key: {}", k),
+        }
+    }
+}
 
-    let material_1 = Material::new_dielectric(1.5);
-    world.add(Shape::new_sphere(Point3::from([0.0, 1.0, 0.0]), 1.0, material_1));
 
-    let material_2 = Material::new_lambertian(Color::from([0.4, 0.2, 0.1]));
-    world.add(Shape::new_sphere(Point3::from([-4.0, 1.0, 0.0]), 1.0, material_2));
+fn read_ply() -> HittableList {
+    let mut world = HittableList::default();
+    let ground_material = Material::new_metal(Color::from([0.5, 0.5, 0.5]), 0.0);
+    world.add(Shape::new_triangle(Point3::from([1000.0,0.0,0.0]),Point3::from([0.0,0.0,-1000.0]),Point3::from([0.0,0.0,1000.0]),ground_material));
+    world.add(Shape::new_triangle(Point3::from([0.0,0.0,-1000.0]),Point3::from([-1000.0,0.0,0.0]),Point3::from([0.0,0.0,1000.0]),ground_material));
+    let path = "assets/bunny.ply";
+    let f = std::fs::File::open(path).unwrap();
+    let mut f = std::io::BufReader::new(f);
 
-    let material_3 = Material::new_metal(Color::from([0.7, 0.6, 0.5]), 0.0);
-    world.add(Shape::new_sphere(Point3::from([4.0, 1.0, 0.0]), 1.0, material_3));
+    let vertex_parser = parser::Parser::<Point3>::new();
+    let face_parser = parser::Parser::<Face>::new();
 
+    let header = vertex_parser.read_header(&mut f).unwrap();
+
+    let mut vertex_list = Vec::new();
+    let mut face_list = Vec::new();
+    for (_ignore_key, element) in &header.elements {
+        match element.name.as_ref() {
+            "vertex" => {vertex_list = vertex_parser.read_payload_for_element(&mut f, &element, &header).unwrap();},
+            "face" => {face_list = face_parser.read_payload_for_element(&mut f, &element, &header).unwrap();},
+            _ => panic!("Enexpeced element!"),
+        }
+    }
+    let cube_mat = Material::new_lambertian(Color::from([0.7,0.2,0.1]));
+    for fc in face_list.iter() {
+        world.add(Shape::new_triangle(vertex_list[fc.vertex_index[0] as usize]*10.0,vertex_list[fc.vertex_index[1] as usize]*10.0, vertex_list[fc.vertex_index[2] as usize]*10.0, cube_mat));
+    }
     world
 }
 
@@ -92,13 +98,12 @@ fn simu(row: u32, col: u32, cam: &Camera, world: &HittableList) -> Pixel {
     let pixel_color = (1..=SAMPLES_PER_PIXEL)
         .map(|_| {
             let u = (col as f64 + random_double!()) / (IMAGE_WIDTH - 1) as f64;
-            //let v = 1.0-(row as f64 + random_double!()) / ( IMAGE_HEIGHT - 1) as f64;
             let v = (row as f64 + random_double!()) / ( IMAGE_HEIGHT - 1) as f64;
             ray_color(&cam.get_ray(u, v), world, MAX_DEPTH)
         })
         .fold(Color::default(), |sum, c| sum + c);
     //write_color(pixel_color, 20);
-    let scale = 1.0 / 10.0 as f64;
+    let scale = 1.0 / 20.0 as f64;
     let get_color = |c| (255.999 * clamp(f64::sqrt(scale * c), 0.0, 0.999)) as u32;
     let r = get_color(pixel_color.x);
     let g = get_color(pixel_color.y);
@@ -112,20 +117,20 @@ pub struct Pixel {
     b: u32,
 }
 const ASPECT_RATIO: f64 = 16.0 / 9.0;
-const IMAGE_WIDTH: u32 = 1200;
+const IMAGE_WIDTH: u32 = 300;
 const IMAGE_HEIGHT: u32 = ((IMAGE_WIDTH as f64) / ASPECT_RATIO) as u32;
-const SAMPLES_PER_PIXEL: usize = 10;
-const MAX_DEPTH: usize = 50;
+const SAMPLES_PER_PIXEL: usize = 20;
+const MAX_DEPTH: usize = 2;
+
 fn main() {
-
-
     println!("P3");
     println!("{} {}", IMAGE_WIDTH, IMAGE_HEIGHT);
     println!("255");
 
-    let world = random_scene();
-    let lookfrom = Point3::from([13.0, 2.0, 3.0]);
-    let lookat = Point3::default();
+    let world = read_ply();
+    let lookfrom = Point3::from([11.0, 3.5, -11.0]);
+    //let lookfrom = Point3::from([0.7,0.1,0.7]);
+    let lookat = Point3::from([0.0, 1.0, 0.0]);
     let vup = Vec3::from([0.0, 1.0, 0.0]);
     let dist_to_focus = 10.0;
     let aperture = 0.1;

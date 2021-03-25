@@ -1,6 +1,7 @@
 use crate::{random_double, utils::PI};
 use std::fmt;
 use std::ops::{Add, Div, Mul, MulAssign, Neg, Sub};
+use ply_rs::ply;
 
 #[derive(Clone, Copy, Default, PartialEq)]
 pub struct Vec3 {
@@ -214,4 +215,25 @@ pub fn refract(uv: Vec3, n: Vec3, etai_over_etat: f64) -> Vec3 {
     let r_out_parallel = etai_over_etat * (uv + cos_theta * n);
     let r_out_perp = -f64::sqrt(1.0 - r_out_parallel.length_squared()) * n;
     r_out_parallel + r_out_perp
+}
+
+
+impl ply::PropertyAccess for Point3 {
+    fn new() -> Self {
+        Point3 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        }
+    }
+    fn set_property(&mut self, key: String, property: ply::Property) {
+        match (key.as_ref(), property) {
+            ("x", ply::Property::Float(v)) => self.x = v as f64,
+            ("y", ply::Property::Float(v)) => self.y = v as f64,
+            ("z", ply::Property::Float(v)) => self.z = v as f64,
+            ("confidence", _) => {},
+            ("intensity", _) => {},
+            (k, _) => panic!("Vertex: Unexpected key/value combination: key: {}", k),
+        }
+    }
 }

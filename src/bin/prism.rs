@@ -99,7 +99,7 @@ fn prism() -> HittableList {
 }
 
 fn render(cam: &Camera, world: &HittableList) -> Vec<Pixel> {
-    let pix_coord: Vec<(u32,u32)> = iproduct!(0..IMAGE_HEIGHT, 0..IMAGE_WIDTH).collect();
+    let pix_coord: Vec<(u32,u32)> = iproduct!((0..IMAGE_HEIGHT).rev(), 0..IMAGE_WIDTH).collect();
     let img: Vec<Pixel> = pix_coord.par_iter().map(|(row, col)| simu(*row, *col, cam, world)).collect();
     img
 }
@@ -108,7 +108,7 @@ fn simu(row: u32, col: u32, cam: &Camera, world: &HittableList) -> Pixel {
     let pixel_color = (1..=SAMPLES_PER_PIXEL)
         .map(|_| {
             let u = (col as f64 + random_double!()) / (IMAGE_WIDTH - 1) as f64;
-            let v = 1.0-(row as f64 + random_double!()) / ( IMAGE_HEIGHT - 1) as f64;
+            let v = (row as f64 + random_double!()) / ( IMAGE_HEIGHT - 1) as f64;
             ray_color(&cam.get_ray(u, v), world, MAX_DEPTH)
         })
         .fold(Color::default(), |sum, c| sum + c);

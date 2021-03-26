@@ -117,10 +117,10 @@ pub struct Pixel {
     b: u32,
 }
 const ASPECT_RATIO: f64 = 16.0 / 9.0;
-const IMAGE_WIDTH: u32 = 300;
+const IMAGE_WIDTH: u32 = 600;
 const IMAGE_HEIGHT: u32 = ((IMAGE_WIDTH as f64) / ASPECT_RATIO) as u32;
 const SAMPLES_PER_PIXEL: usize = 20;
-const MAX_DEPTH: usize = 2;
+const MAX_DEPTH: usize = 5;
 
 fn main() {
     println!("P3");
@@ -128,7 +128,7 @@ fn main() {
     println!("255");
 
     let world = read_ply();
-    let lookfrom = Point3::from([11.0, 3.5, -11.0]);
+    let lookfrom = Point3::from([7.0, 3.5, -7.0]);
     //let lookfrom = Point3::from([0.7,0.1,0.7]);
     let lookat = Point3::from([0.0, 1.0, 0.0]);
     let vup = Vec3::from([0.0, 1.0, 0.0]);

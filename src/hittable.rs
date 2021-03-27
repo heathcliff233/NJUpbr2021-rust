@@ -3,7 +3,8 @@ use crate::{
     ray::Ray,
     vec3::{dot, Point3, Vec3},
     sphere::Sphere,
-    triangle::Triangle
+    triangle::Triangle,
+    cylinder::Cylinder
 };
 
 #[derive(Clone)]
@@ -46,7 +47,8 @@ pub trait Hittable {
 
 pub enum Shape {
     Sphere(Sphere),
-    Triangle(Triangle)
+    Triangle(Triangle),
+    Cylinder(Cylinder),
 }
 
 impl Shape {
@@ -55,6 +57,9 @@ impl Shape {
     }
     pub fn new_triangle(a0: Point3, a1: Point3, a2: Point3, material: Material) -> Self {
         Shape::Triangle(Triangle::new(a0, a1, a2, material))
+    }
+    pub fn new_cylinder(r: f64, d: f64, material: Material) -> Self {
+        Shape::Cylinder(Cylinder::new(r, d, material))
     }
 }
 
@@ -69,6 +74,7 @@ impl Hittable for Shape {
         match self {
             Shape::Sphere(m) => m.hit(r, t_min, t_max, rec),
             Shape::Triangle(m) => m.hit(r, t_min, t_max, rec),
+            Shape::Cylinder(m) => m.hit(r, t_min, t_max, rec),
         }
     }
 }

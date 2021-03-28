@@ -10,7 +10,7 @@ weekend](https://raytracing.github.io/books/RayTracingInOneWeekend.html) .
 Core Features:
 * Parallelism enabled by the fantastic Rust crate `rayon`.
 * Convert source pixels of a logo image to a rendered one in 3D space.
-* Enable triangles. Support mesh import.
+* Enable triangles. Support mesh import. Support intersection.
 * Metropolis sampling. [TODO]
 * Light bouncing on hittable speed up. [TODO]
 

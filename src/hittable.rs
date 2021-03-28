@@ -4,6 +4,7 @@ use crate::{
     vec3::{dot, Point3, Vec3},
     sphere::Sphere,
     triangle::Triangle,
+    mesh::Mesh,
     cylinder::Cylinder
 };
 
@@ -49,6 +50,7 @@ pub enum Shape {
     Sphere(Sphere),
     Triangle(Triangle),
     Cylinder(Cylinder),
+    Mesh(Mesh)
 }
 
 impl Shape {
@@ -57,6 +59,9 @@ impl Shape {
     }
     pub fn new_triangle(a0: Point3, a1: Point3, a2: Point3, material: Material) -> Self {
         Shape::Triangle(Triangle::new(a0, a1, a2, material))
+    }
+    pub fn new_mesh(a0: Point3, a1: Point3, a2: Point3, n0:Point3, n1:Point3, n2: Point3, material: Material) -> Self {
+        Shape::Mesh(Mesh::new(a0, a1, a2, n0, n1, n2, material))
     }
     pub fn new_cylinder(r: f64, d: f64, material: Material) -> Self {
         Shape::Cylinder(Cylinder::new(r, d, material))
@@ -75,6 +80,7 @@ impl Hittable for Shape {
             Shape::Sphere(m) => m.hit(r, t_min, t_max, rec),
             Shape::Triangle(m) => m.hit(r, t_min, t_max, rec),
             Shape::Cylinder(m) => m.hit(r, t_min, t_max, rec),
+            Shape::Mesh(m) => m.hit(r, t_min, t_max, rec)
         }
     }
 }

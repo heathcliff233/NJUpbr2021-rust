@@ -68,6 +68,18 @@ impl Add<Vec3> for Vec3 {
     }
 }
 
+impl Add<f64> for Vec3 {
+    type Output = Vec3;
+
+    fn add(self, rhs: f64) -> Vec3 {
+        Self::Output {
+            x: self.x + rhs,
+            y: self.y + rhs,
+            z: self.z + rhs
+        }
+    }
+}
+
 impl Sub<Vec3> for Vec3 {
     type Output = Vec3;
 
@@ -233,7 +245,8 @@ impl ply::PropertyAccess for Point3 {
             ("z", ply::Property::Float(v)) => self.z = v as f64,
             ("confidence", _) => {},
             ("intensity", _) => {},
-            (k, _) => panic!("Vertex: Unexpected key/value combination: key: {}", k),
+            (_k, _) => {},
+            //(k, _) => panic!("Vertex: Unexpected key/value combination: key: {}", k),
         }
     }
 }

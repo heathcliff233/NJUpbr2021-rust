@@ -15,6 +15,10 @@ Core Features:
 * Light bouncing on hittable speed up. [TODO]
 
 ![](./bunny.png)
+key with no intersection
+![](./key_ori.png)
+key with intersection
+![](./key_int.png)
 
 Usage:
 * `cargo build --release`

@@ -3,9 +3,11 @@ use crate::{
     material::Material,
     ray::Ray,
     vec3::{dot, Point3},
+    aabb::Aabb
 };
 use std::f64::consts::PI;
 
+#[derive(Copy, Clone)]
 pub struct Sphere {
     center: Point3,
     radius: f64,
@@ -56,5 +58,11 @@ impl Hittable for Sphere {
         Sphere::get_sphere_uv(&outward_normal, &mut rec.u, &mut rec.v);
         rec.material = self.material.clone();
         return true;
+    }
+
+    fn bounding_box(&self, _time0: f64, _time1: f64, output_box: &mut Aabb) -> bool {
+        let r = Point3::from([self.radius, self.radius, self.radius]);
+        output_box.modify(self.center-r, self.center+r);
+        return true
     }
 }

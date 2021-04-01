@@ -3,9 +3,12 @@ use crate::{
     material::Material,
     ray::Ray,
     vec3::{dot, Point3, unit_vector, cross},
+    aabb::Aabb,
+    utils::{fmax, fmin}
 };
 use std::f64::consts::PI;
 
+#[derive(Copy, Clone)]
 pub struct Triangle {
     a0: Point3,
     a1: Point3,
@@ -53,5 +56,17 @@ impl Hittable for Triangle {
         Triangle::get_sphere_uv(&outward_normal, &mut rec.u, &mut rec.v);
         rec.material = self.material.clone();
         return true;
+    }
+
+    fn bounding_box(&self, _time0: f64, _time1: f64, output_box: &mut Aabb) -> bool {
+        let x_mx = fmax(fmax(self.a0.x, self.a1.x),self.a2.x);
+        let y_mx = fmax(fmax(self.a0.y, self.a1.y),self.a2.y);
+        let z_mx = fmax(fmax(self.a0.z, self.a1.z),self.a2.z);
+        let x_mn = fmin(fmin(self.a0.x, self.a1.x),self.a2.x);
+        let y_mn = fmin(fmin(self.a0.y, self.a1.y),self.a2.y);
+        let z_mn = fmin(fmin(self.a0.z, self.a1.z),self.a2.z);
+        output_box.modify(Point3::from([x_mn+0.0001, y_mn+0.0001, z_mn+0.0001]), Point3::from([x_mx, y_mx, z_mx]));
+        true
+
     }
 }

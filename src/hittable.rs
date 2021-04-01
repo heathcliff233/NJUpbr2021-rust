@@ -5,7 +5,9 @@ use crate::{
     sphere::Sphere,
     triangle::Triangle,
     mesh::Mesh,
-    cylinder::Cylinder
+    cylinder::Cylinder,
+    aabb::Aabb,
+    bvh::BvhNode
 };
 
 #[derive(Clone)]
@@ -44,27 +46,30 @@ impl HitRecord {
 
 pub trait Hittable {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool;
+    fn bounding_box(&self, time0: f64, time1: f64, output_box: &mut Aabb) -> bool;
 }
 
+#[derive(Clone)]
 pub enum Shape {
-    Sphere(Sphere),
-    Triangle(Triangle),
-    Cylinder(Cylinder),
-    Mesh(Mesh)
+    Sphere(Box<Sphere>),
+    Triangle(Box<Triangle>),
+    Cylinder(Box<Cylinder>),
+    Mesh(Box<Mesh>),
+    BvhNode(Box<BvhNode>),
 }
 
 impl Shape {
     pub fn new_sphere(center: Point3, radius: f64, material: Material) -> Self {
-        Shape::Sphere(Sphere::new(center, radius, material))
+        Shape::Sphere(Box::new(Sphere::new(center, radius, material)))
     }
     pub fn new_triangle(a0: Point3, a1: Point3, a2: Point3, material: Material) -> Self {
-        Shape::Triangle(Triangle::new(a0, a1, a2, material))
+        Shape::Triangle(Box::new(Triangle::new(a0, a1, a2, material)))
     }
     pub fn new_mesh(a0: Point3, a1: Point3, a2: Point3, n0:Point3, n1:Point3, n2: Point3, material: Material) -> Self {
-        Shape::Mesh(Mesh::new(a0, a1, a2, n0, n1, n2, material))
+        Shape::Mesh(Box::new(Mesh::new(a0, a1, a2, n0, n1, n2, material)))
     }
     pub fn new_cylinder(r: f64, d: f64, material: Material) -> Self {
-        Shape::Cylinder(Cylinder::new(r, d, material))
+        Shape::Cylinder(Box::new(Cylinder::new(r, d, material)))
     }
 }
 
@@ -80,7 +85,24 @@ impl Hittable for Shape {
             Shape::Sphere(m) => m.hit(r, t_min, t_max, rec),
             Shape::Triangle(m) => m.hit(r, t_min, t_max, rec),
             Shape::Cylinder(m) => m.hit(r, t_min, t_max, rec),
-            Shape::Mesh(m) => m.hit(r, t_min, t_max, rec)
+            Shape::Mesh(m) => m.hit(r, t_min, t_max, rec),
+            Shape::BvhNode(m) => m.hit(r, t_min, t_max, rec)
         }
     }
+
+    fn bounding_box(
+        &self,
+        time0: f64,
+        time1: f64,
+        bounding_box: &mut Aabb
+    ) -> bool {
+        match self {
+            Shape::Sphere(m) => m.bounding_box(time0, time1, bounding_box),
+            Shape::Triangle(m) => m.bounding_box(time0, time1, bounding_box),
+            Shape::Cylinder(m) => m.bounding_box(time0, time1, bounding_box),
+            Shape::Mesh(m) => m.bounding_box(time0, time1, bounding_box),
+            Shape::BvhNode(m) => m.bounding_box(time0, time1, bounding_box)
+        }
+    }
+
 }

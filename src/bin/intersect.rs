@@ -9,6 +9,7 @@ use rayt::{
 };
 
 use rayon::prelude::*;
+//use std::sync::Arc;
 
 #[macro_use]
 extern crate rayt;
@@ -110,7 +111,8 @@ fn read_ply() -> HittableList {
             _ => panic!("Enexpeced element!"),
         }
     }
-    let cube_mat = Material::new_lambertian(Color::from([0.7,0.2,0.1]));
+    //let cube_mat = Material::new_lambertian(Color::from([0.7,0.2,0.1]));
+    let cube_mat = Material::new_metal(Color::from([0.746,0.676,0.434]), 0.2);
     for fc in face_list.iter() {
         //world.add(Shape::new_triangle(vertex_list[fc.vertex_index[0] as usize]/20.0,vertex_list[fc.vertex_index[1] as usize]/20.0, vertex_list[fc.vertex_index[2] as usize]/20.0, cube_mat));
         //world.add(Shape::new_triangle(vertex_list[fc.vertex_index[0] as usize].vert/20.0,vertex_list[fc.vertex_index[1] as usize].vert/20.0,vertex_list[fc.vertex_index[2] as usize].vert/20.0, cube_mat));

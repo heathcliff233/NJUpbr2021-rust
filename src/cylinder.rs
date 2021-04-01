@@ -3,9 +3,11 @@ use crate::{
     material::Material,
     ray::Ray,
     vec3::{Vec3, Point3},
+    aabb::Aabb
 };
 use std::f64::consts::PI;
 
+#[derive(Copy, Clone)]
 pub struct Cylinder {
     r: f64,
     d: f64,
@@ -65,5 +67,9 @@ impl Hittable for Cylinder {
 
         }
 
+    }
+    fn bounding_box(&self, _time0: f64, _time1: f64, output_box: &mut Aabb) -> bool {
+        output_box.modify(Point3::from([(-1.0)*self.r, 0.0, (-1.0)*self.r]), Point3::from([self.r, self.d, self.r]));
+        true
     }
 }

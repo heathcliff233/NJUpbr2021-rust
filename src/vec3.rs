@@ -1,6 +1,6 @@
 use crate::{random_double, utils::PI};
 use std::fmt;
-use std::ops::{Add, Div, Mul, MulAssign, Neg, Sub};
+use std::ops::{Add, Div, Mul, MulAssign, Neg, Sub, Index};
 use ply_rs::ply;
 
 #[derive(Clone, Copy, Default, PartialEq)]
@@ -43,6 +43,19 @@ impl Vec3 {
 impl fmt::Debug for Vec3 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Vec3 ({:?}, {:?}, {:?})", self.x, self.y, self.z)
+    }
+}
+
+
+impl Index<usize> for Vec3 {
+    type Output = f64;
+    fn index(&self, i: usize) -> &f64 {
+        match i {
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z,
+            _ => &self.x,
+        }
     }
 }
 

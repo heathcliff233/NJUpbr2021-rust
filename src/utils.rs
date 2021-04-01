@@ -31,3 +31,18 @@ pub fn clamp(x: f64, min: f64, max: f64) -> f64 {
         _ => x,
     }
 }
+
+pub fn fmin(x: f64, y: f64) -> f64 {
+    if x < y {
+        return x;
+    }
+    y
+}
+
+pub fn fmax(x: f64, y: f64) -> f64 {
+    if x < y {
+        return y;
+    }
+    x
+}
+

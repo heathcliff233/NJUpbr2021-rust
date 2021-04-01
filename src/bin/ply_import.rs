@@ -9,6 +9,7 @@ use rayt::{
 };
 
 use rayon::prelude::*;
+//use std::sync::Arc;
 
 #[macro_use]
 extern crate rayt;

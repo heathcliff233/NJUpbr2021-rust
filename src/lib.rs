@@ -11,3 +11,4 @@ pub mod vec3;
 pub mod triangle;
 pub mod mesh;
 pub mod cylinder;
+pub mod bvh;

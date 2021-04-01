@@ -9,6 +9,7 @@ use rayt::{
 };
 
 use rayon::prelude::*;
+//use std::sync::Arc;
 //use image::GenericImageView;
 
 #[macro_use]

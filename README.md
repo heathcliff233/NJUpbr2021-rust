@@ -1,4 +1,4 @@
-# NJU pbr 2021[![Build Status](https://travis-ci.com/heathcliff233/NJUpbr2021-rust.svg?branch=main)](https://travis-ci.com/heathcliff233/NJUpbr2021-rust)
+# NJU pbr 2021[![Build Status](https://travis-ci.com/heathcliff233/NJUpbr2021-rust.svg?branch=main)](https://travis-ci.com/KymWorship/NJUpbr2021-rust)
 This is a final project for NJU physically based rendering 2021 Sping.
 It is implemented in Rust and is by no means a mature renderer.
 
@@ -12,13 +12,13 @@ Core Features:
 * Convert source pixels of a logo image to a rendered one in 3D space.
 * Enable triangles. Support mesh import. Support intersection.
 * Metropolis sampling. [TODO]
-* Light bouncing on hittable speed up. [TODO]
+* Acceleration: Bvh, Octree[TODO], KDTree[TODO].
+* Texture. [TODO]
+* Photon mapping. [TODO]
 
 ![](./bunny.png)
-key with no intersection
+key 
 ![](./key_ori.png)
-key with intersection
-![](./key_int.png)
 
 Usage:
 * `cargo build --release`

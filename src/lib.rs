@@ -12,4 +12,5 @@ pub mod triangle;
 pub mod mesh;
 pub mod cylinder;
 pub mod bvh;
-mod texture;
+pub mod texture;
+pub mod sphere_blur;

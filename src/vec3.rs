@@ -2,6 +2,7 @@ use crate::{random_double, utils::PI};
 use std::fmt;
 use std::ops::{Add, Div, Mul, MulAssign, Neg, Sub, Index};
 use ply_rs::ply;
+use crate::utils::{fmax, fmin};
 
 #[derive(Clone, Copy, Default, PartialEq)]
 pub struct Vec3 {
@@ -240,6 +241,14 @@ pub fn refract(uv: Vec3, n: Vec3, etai_over_etat: f64) -> Vec3 {
     let r_out_parallel = etai_over_etat * (uv + cos_theta * n);
     let r_out_perp = -f64::sqrt(1.0 - r_out_parallel.length_squared()) * n;
     r_out_parallel + r_out_perp
+}
+
+pub fn align_min(a1: Vec3, a2: Vec3) -> Vec3 {
+    Vec3::from([fmin(a1.x, a2.x), fmin(a1.y, a2.y), fmin(a1.z, a2.z)])
+}
+
+pub fn align_max(a1: Vec3, a2: Vec3) -> Vec3 {
+    Vec3::from([fmax(a1.x, a2.x), fmax(a1.y, a2.y), fmax(a1.z, a2.z)])
 }
 
 

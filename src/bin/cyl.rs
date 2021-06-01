@@ -83,6 +83,7 @@ fn cyl() -> HittableList {
     let cyl_mat = Material::new_metal(Color::from([0.8, 0.6, 0.4]), 0.1);
     //world.add(Shape::new_cylinder(1.0,1.0,cyl_mat));
     world.add(Shape::new_sphere(Vec3::from([0.0, 1.0, 0.0]), 1.0, cyl_mat));
+    world.add(Shape::new_sphere_blur(Vec3::from([0.5, 0.3, -0.5]), Vec3::from([1.0,0.3,-0.5]),0.3,cyl_mat,0.0,1.0));
     world.add(Shape::new_sphere(Vec3::from([4.0, 0.3,-2.0]), 0.3, cyl_mat));
     world
 }
@@ -132,7 +133,7 @@ fn main() {
     let lookat = Point3::from([0.0,0.5,0.0]);
     let vup = Vec3::from([0.0, 1.0, 0.0]);
     let dist_to_focus = (lookat - lookfrom).length();
-    let aperture = 1.5;
+    let aperture = 0.1;
 
     let cam = Camera::new(
         lookfrom,
@@ -143,7 +144,7 @@ fn main() {
         aperture,
         dist_to_focus,
         0.0,
-        0.0,
+        1.0,
     );
 
     let img: Vec<Pixel> = render(&cam, &world);

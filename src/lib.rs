@@ -12,3 +12,4 @@ pub mod triangle;
 pub mod mesh;
 pub mod cylinder;
 pub mod bvh;
+mod texture;

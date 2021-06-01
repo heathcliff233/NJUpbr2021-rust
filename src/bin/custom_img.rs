@@ -2,6 +2,7 @@ use rayt::{
     camera::Camera,
     hittable::{HitRecord, Hittable, Shape},
     hittable_list::HittableList,
+    bvh::BvhNode,
     material::{Material, Scatter},
     ray::Ray,
     utils::{INFINITY, clamp},
@@ -17,7 +18,7 @@ extern crate rayt;
 #[macro_use]
 extern crate itertools;
 
-fn ray_color(r: &Ray, world: &HittableList, depth: usize) -> Color {
+fn ray_color(r: &Ray, world: &Shape, depth: usize) -> Color {
     let mut rec = HitRecord::new(Material::new_lambertian(Color::zero()));
     if depth <= 0 {
         return Color::new(0.0, 0.0, 0.0);
@@ -38,8 +39,9 @@ fn ray_color(r: &Ray, world: &HittableList, depth: usize) -> Color {
     return (1.0 - t) * Color::ones() + t * Color::new(0.5, 0.7, 1.0);
 }
 
-fn read_image() -> HittableList {
+fn read_image() -> (HittableList, usize) {
     let mut world = HittableList::default();
+    let mut cnt: usize = 0;
     let ground_material = Material::new_metal(Color::from([0.5, 0.5, 0.5]), 0.0);
     world.add(Shape::new_sphere(
         Point3::from([0.0, -1000.0, 0.0]),
@@ -58,19 +60,20 @@ fn read_image() -> HittableList {
                     0.18,
                     sphere_material,
                 ));
+                cnt += 1;
             }
         }
     }
-    world
+    (world, cnt)
 }
 
-fn render(cam: &Camera, world: &HittableList) -> Vec<Pixel> {
+fn render(cam: &Camera, world: &Shape) -> Vec<Pixel> {
     let pix_coord: Vec<(u32,u32)> = iproduct!((0..IMAGE_HEIGHT).rev(), 0..IMAGE_WIDTH).collect();
     let img: Vec<Pixel> = pix_coord.par_iter().map(|(row, col)| simu(*row, *col, cam, world)).collect();
     img
 }
 
-fn simu(row: u32, col: u32, cam: &Camera, world: &HittableList) -> Pixel {
+fn simu(row: u32, col: u32, cam: &Camera, world: &Shape) -> Pixel {
     let pixel_color = (1..=SAMPLES_PER_PIXEL)
         .map(|_| {
             let u = (col as f64 + random_double!()) / (IMAGE_WIDTH - 1) as f64;
@@ -95,15 +98,16 @@ pub struct Pixel {
 const ASPECT_RATIO: f64 = 16.0 / 9.0;
 const IMAGE_WIDTH: u32 = 1600;
 const IMAGE_HEIGHT: u32 = ((IMAGE_WIDTH as f64) / ASPECT_RATIO) as u32;
-const SAMPLES_PER_PIXEL: usize = 20;
-const MAX_DEPTH: usize = 50;
+const SAMPLES_PER_PIXEL: usize = 50;
+const MAX_DEPTH: usize = 20;
 
 fn main() {
     println!("P3");
     println!("{} {}", IMAGE_WIDTH, IMAGE_HEIGHT);
     println!("255");
 
-    let world = read_image();
+    let (mut source_b, end) = read_image();
+    let world = BvhNode::new(&mut source_b.objects, 0, end);
     let lookfrom = Point3::from([22.0, 4.0, 22.0]);
     let lookat = Point3::from([0.0,2.0,-4.0]);
     let vup = Vec3::from([0.0, 1.0, 0.0]);

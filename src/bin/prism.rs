@@ -34,7 +34,8 @@ fn ray_color(r: &Ray, world: &HittableList, depth: usize) -> Color {
         return Color::zero();
     }
     let unit_direction = unit_vector(r.direction);
-    let t = 0.5 * (unit_direction.y + 1.0);
+    //let t = 0.5 * (unit_direction.y + 1.0);
+    let t = 0.8 * (unit_direction.y + 0.25);
     return (1.0 - t) * Color::ones() + t * Color::new(0.5, 0.7, 1.0);
 }
 
@@ -68,7 +69,7 @@ fn read_image() -> HittableList {
 
 fn prism() -> HittableList {
     let mut world = HittableList::default();
-    let ground_material = Material::new_metal(Color::from([0.7, 0.2, 0.1]), 0.7);
+    let ground_material = Material::new_metal(Color::from([0.7, 0.5, 0.4]), 0.2);
     //let ground_material = Material::new_lambertian(Color::from([0.5, 0.5, 0.5]));
     /*
     world.add(Shape::new_sphere(

@@ -2,8 +2,10 @@ use crate::{
     hittable::HitRecord,
     random_double,
     ray::Ray,
+    texture::Surface,
     vec3::{dot, random_in_unit_sphere, random_unit_vector, reflect, refract, unit_vector, Color},
 };
+use crate::texture::Texture;
 
 pub trait Scatter {
     fn scatter(
@@ -54,12 +56,12 @@ impl Scatter for Material {
 
 #[derive(Copy, Clone)]
 pub struct Lambertian {
-    albedo: Color,
+    albedo: Surface,
 }
 
 impl Lambertian {
     fn new(albedo: Color) -> Self {
-        Self { albedo }
+        Self { albedo: Surface::new_solid_color(albedo) }
     }
 }
 
@@ -73,21 +75,21 @@ impl Scatter for Lambertian {
     ) -> bool {
         let scatter_direction = rec.normal + random_unit_vector();
         *scattered = Ray::new(rec.p, scatter_direction, 0.0);
-        *attenuation = self.albedo;
+        *attenuation = self.albedo.value(rec.u, rec.v, &rec.p);
         true
     }
 }
 
 #[derive(Copy, Clone)]
 pub struct Metal {
-    albedo: Color,
+    albedo: Surface,
     fuzz: f64,
 }
 
 impl Metal {
     fn new(albedo: Color, fuzz: f64) -> Self {
         Self {
-            albedo,
+            albedo: Surface::new_test_texture(albedo),
             fuzz: if fuzz < 1.0 { fuzz } else { 1.0 },
         }
     }
@@ -103,7 +105,7 @@ impl Scatter for Metal {
     ) -> bool {
         let reflected = reflect(unit_vector(r_in.direction), rec.normal);
         *scattered = Ray::new(rec.p, reflected + self.fuzz * random_in_unit_sphere(), 0.0);
-        *attenuation = self.albedo;
+        *attenuation = self.albedo.value(rec.u, rec.v, &rec.p);
         dot(&scattered.direction, &rec.normal) > 0.0
     }
 }

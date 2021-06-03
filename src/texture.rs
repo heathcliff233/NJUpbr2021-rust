@@ -1,5 +1,6 @@
 use crate::{
     random_double,
+    perlin::*,
     vec3::{Vec3, dot, random_in_unit_sphere, random_unit_vector, reflect, refract, unit_vector, Color},
 };
 
@@ -11,11 +12,13 @@ pub trait Texture {
 pub enum Surface {
     SolidColor(SolidColor),
     TestTexture(TestTexture),
+    NoiseTexture(NoiseTexture),
 }
 
 impl Surface {
     pub fn new_solid_color(c:Color) -> Self {Surface::SolidColor(SolidColor::new(c))}
     pub fn new_test_texture(c:Color) -> Self {Surface::TestTexture(TestTexture::new(c))}
+    pub fn new_noise_texture() -> Self {Surface::NoiseTexture(NoiseTexture::new())}
 }
 
 impl Texture for Surface {
@@ -23,6 +26,7 @@ impl Texture for Surface {
         match self {
             Surface::SolidColor(r) => r.value(u,v,p),
             Surface::TestTexture(r) => r.value(u,v,p),
+            Surface::NoiseTexture(r) => r.value(u,v,p),
         }
     }
 }
@@ -84,5 +88,24 @@ impl Texture for TestTexture {
         } else {
             return self.color2;
         }
+    }
+}
+
+#[derive(Copy, Clone)]
+pub struct NoiseTexture {
+    pub noise: Perlin,
+}
+
+impl NoiseTexture {
+    pub fn new() -> Self {
+        return Self {
+            noise: Perlin::new(),
+        };
+    }
+}
+
+impl Texture for NoiseTexture {
+    fn value(&self, u:f64, v:f64, p:&Vec3) -> Vec3 {
+        return Vec3::ones() * self.noise.noise(p);
     }
 }

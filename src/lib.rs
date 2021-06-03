@@ -14,3 +14,4 @@ pub mod cylinder;
 pub mod bvh;
 pub mod texture;
 pub mod sphere_blur;
+pub mod perlin;

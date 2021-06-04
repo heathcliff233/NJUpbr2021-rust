@@ -84,7 +84,7 @@ fn cyl() -> HittableList {
     //world.add(Shape::new_cylinder(1.0,1.0,cyl_mat));
     world.add(Shape::new_sphere(Vec3::from([0.0, 1.0, 0.0]), 1.0, Material::new_noise_lamb(4.0)));
     world.add(Shape::new_sphere_blur(Vec3::from([0.5, 0.3, -0.5]), Vec3::from([1.0,0.3,-0.5]),0.3,cyl_mat.clone(),0.0,1.0));
-    world.add(Shape::new_sphere(Vec3::from([4.0, 0.3,-2.0]), 0.3, cyl_mat.clone()));
+    world.add(Shape::new_sphere(Vec3::from([4.0, 0.3,-2.0]), 0.3, Material::new_image_tex(&String::from("assets/1.png"))));
     world
 }
 

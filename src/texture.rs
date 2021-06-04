@@ -2,7 +2,11 @@ use crate::{
     random_double,
     perlin::*,
     vec3::{Vec3, dot, random_in_unit_sphere, random_unit_vector, reflect, refract, unit_vector, Color},
+    utils::clamp,
 };
+
+use image::*;
+use std::path::*;
 
 pub trait Texture {
     fn value(&self, u:f64, v:f64, p:&Vec3) -> Color;
@@ -12,12 +16,14 @@ pub trait Texture {
 pub enum Surface {
     SolidColor(SolidColor),
     TestTexture(TestTexture),
+    ImageTexture(ImageTexture),
     NoiseTexture(NoiseTexture),
 }
 
 impl Surface {
     pub fn new_solid_color(c:Color) -> Self {Surface::SolidColor(SolidColor::new(c))}
     pub fn new_test_texture(c:Color) -> Self {Surface::TestTexture(TestTexture::new(c))}
+    pub fn new_image_texture(c:&str) -> Self {Surface::ImageTexture(ImageTexture::new_by_pathstr(c))}
     pub fn new_noise_texture(c:f64) -> Self {Surface::NoiseTexture(NoiseTexture::new(c))}
 }
 
@@ -26,6 +32,7 @@ impl Texture for Surface {
         match self {
             Surface::SolidColor(r) => r.value(u,v,p),
             Surface::TestTexture(r) => r.value(u,v,p),
+            Surface::ImageTexture(r) => r.value(u,v,p),
             Surface::NoiseTexture(r) => r.value(u,v,p),
         }
     }
@@ -88,6 +95,50 @@ impl Texture for TestTexture {
         } else {
             return self.color2;
         }
+    }
+}
+
+#[derive(Clone)]
+
+pub struct ImageTexture {
+    pub data: ImageBuffer<image::Rgb<u8>, std::vec::Vec<u8>>,
+}
+impl ImageTexture {
+    pub fn new_by_pathstr(dir: &str) -> Self {
+        return Self {
+            data: image::open(&Path::new(dir)).unwrap().to_rgb(),
+        };
+    }
+    pub fn width(&self) -> u32 {
+        return self.data.width();
+    }
+    pub fn height(&self) -> u32 {
+        return self.data.height();
+    }
+}
+impl Texture for ImageTexture {
+    fn value(&self, u: f64, v: f64, _p: &Vec3) -> Vec3 {
+        let u = clamp(u, 0.0, 1.0);
+        let v = 1.0 - clamp(v, 0.0, 1.0);
+        let mut i: u32 = (u * self.width() as f64) as u32;
+        let mut j: u32 = (v * self.height() as f64) as u32;
+
+        // Clamp integer mapping, since actual coordinates should be less than 1.0
+        if i >= self.width() {
+            i = self.width() - 1;
+        }
+        if j >= self.height() {
+            j = self.height() - 1;
+        }
+
+        const COLOR_SCALE: f64 = 1.0 / 255.0;
+        let pixel = self.data.get_pixel(i, j);
+        let [red, green, blue] = pixel.0;
+        return Vec3::new(
+            red as f64 * COLOR_SCALE,
+            green as f64 * COLOR_SCALE,
+            blue as f64 * COLOR_SCALE,
+        );
     }
 }
 

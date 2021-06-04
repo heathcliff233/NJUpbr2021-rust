@@ -33,6 +33,8 @@ impl Material {
         Material::Lambertian(Lambertian::new1(c))
     }
 
+    pub fn new_image_tex(c: &str) -> Self { Material::Lambertian(Lambertian::new_img(c))}
+
     pub fn new_metal(albedo: Color, fuzz: f64) -> Self {
         Material::Metal(Metal::new(albedo, fuzz))
     }
@@ -68,6 +70,7 @@ impl Lambertian {
         Self { albedo: Surface::new_solid_color(albedo) }
     }
     fn new1(c:f64) -> Self { Self { albedo: Surface::new_noise_texture(c)} }
+    fn new_img(c:&str) -> Self { Self { albedo: Surface::new_image_texture(c)}}
 }
 
 impl Scatter for Lambertian {

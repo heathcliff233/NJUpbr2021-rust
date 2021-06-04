@@ -90,8 +90,8 @@ impl ply::PropertyAccess for Vertex {
 fn read_ply() -> HittableList {
     let mut world = HittableList::default();
     let ground_material = Material::new_metal(Color::from([0.5, 0.5, 0.5]), 0.0);
-    world.add(Shape::new_triangle(Point3::from([1000.0,-0.5,0.0]),Point3::from([0.0,-0.5,-1000.0]),Point3::from([0.0,-0.5,1000.0]),ground_material));
-    world.add(Shape::new_triangle(Point3::from([0.0,-0.5,-1000.0]),Point3::from([-1000.0,-0.5,0.0]),Point3::from([0.0,-0.5,1000.0]),ground_material));
+    world.add(Shape::new_triangle(Point3::from([1000.0,-0.5,0.0]),Point3::from([0.0,-0.5,-1000.0]),Point3::from([0.0,-0.5,1000.0]),ground_material.clone()));
+    world.add(Shape::new_triangle(Point3::from([0.0,-0.5,-1000.0]),Point3::from([-1000.0,-0.5,0.0]),Point3::from([0.0,-0.5,1000.0]),ground_material.clone()));
     let path = "assets/key.ply";
     let f = std::fs::File::open(path).unwrap();
     let mut f = std::io::BufReader::new(f);
@@ -124,7 +124,7 @@ fn read_ply() -> HittableList {
             vertex_list[fc.vertex_index[0] as usize].norm,
             vertex_list[fc.vertex_index[1] as usize].norm,
             vertex_list[fc.vertex_index[2] as usize].norm,
-            cube_mat));
+            cube_mat.clone()));
 
     }
     world

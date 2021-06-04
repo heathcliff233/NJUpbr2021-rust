@@ -7,7 +7,7 @@ use crate::{
 };
 use std::f64::consts::PI;
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct Cylinder {
     r: f64,
     d: f64,

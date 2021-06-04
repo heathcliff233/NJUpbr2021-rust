@@ -1,50 +1,79 @@
 use crate::vec3::*;
-use crate::random_double;
+use rand::seq::SliceRandom;
+use rand::Rng;
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct Perlin {
-    pub ranfloat: Vec<f64>,
-    pub perm_x: Vec<usize>,
-    pub perm_y: Vec<usize>,
-    pub perm_z: Vec<usize>,
+    perm_x: Vec<i32>,
+    perm_y: Vec<i32>,
+    perm_z: Vec<i32>,
+    ranvec: Vec<Vec3>,
 }
 
 impl Perlin {
-    const POINT_COUNT: usize = 256;
+    fn perlin_generate() -> Vec<Vec3> {
+        let mut rng = rand::thread_rng();
+        (0..256)
+            .map(|_| {
+                unit_vector(
+                    Vec3::new(
+                        rng.gen_range(-1.0, 1.0),
+                        rng.gen_range(-1.0, 1.0),
+                        rng.gen_range(-1.0, 1.0),
+                    )
+                )
+            })
+            .collect()
+    }
+
+    fn perlin_generate_perm() -> Vec<i32> {
+        let mut rng = rand::thread_rng();
+        let mut perlin = (0..256)
+            .map(|_| rng.gen_range(0, 256))
+            .collect::<Vec<i32>>();
+        perlin.shuffle(&mut rng);
+        perlin
+    }
 
     pub fn new() -> Self {
-        let mut ranfloat = Vec::new();
-        for _i in 0..Perlin::POINT_COUNT {
-            ranfloat.push(random_double!());
-        }
-        return Self {
-            ranfloat,
+        Self {
             perm_x: Self::perlin_generate_perm(),
             perm_y: Self::perlin_generate_perm(),
             perm_z: Self::perlin_generate_perm(),
-        };
-    }
-    pub fn perlin_generate_perm() -> Vec<usize> {
-        let mut p = Vec::new();
-        for i in 0..Perlin::POINT_COUNT {
-            p.push(i);
-        }
-        Self::permute(&mut p, Self::POINT_COUNT);
-        return p;
-    }
-    pub fn permute(p: &mut Vec<usize>, n: usize) {
-        let mut i: usize = n - 1;
-        while i > 0 {
-            let target = (random_double!() * (i as f64)) as usize;
-            p.swap(i, target);
-            i -= 1;
+            ranvec: Self::perlin_generate(),
         }
     }
-    pub fn noise(&self, p: &Vec3) -> f64 {
-        let i = ((4.0 * p.x) as usize) % Self::POINT_COUNT;
-        let j = ((4.0 * p.y) as usize) % Self::POINT_COUNT;
-        let k = ((4.0 * p.z) as usize) % Self::POINT_COUNT;
 
-        return self.ranfloat[self.perm_x[i] ^ self.perm_y[j] ^ self.perm_z[k]];
+    pub fn noise(&self, p: &Vec3) -> f64 {
+        let u = p.x - p.x.floor();
+        let v = p.y - p.y.floor();
+        let w = p.z - p.z.floor();
+        let uu = u * u * (3.0 - 2.0 * u);
+        let vv = v * v * (3.0 - 2.0 * v);
+        let ww = w * w * (3.0 - 2.0 * w);
+        let i = p.x.floor() as i32;
+        let j = p.y.floor() as i32;
+        let k = p.z.floor() as i32;
+        let mut accum: f64 = 0.0;
+        for di in 0..2 {
+            for dj in 0..2 {
+                for dk in 0..2 {
+                    let idx_i = ((i + di) & 255) as usize;
+                    let idx_j = ((j + dj) & 255) as usize;
+                    let idx_k = ((k + dk) & 255) as usize;
+                    let c = self.ranvec
+                        [(self.perm_x[idx_i] ^ self.perm_y[idx_j] ^ self.perm_z[idx_k]) as usize];
+                    let di = di as f64;
+                    let dj = dj as f64;
+                    let dk = dk as f64;
+                    let weight_v = Vec3::new(u - di, v - dj, w - dk);
+                    accum += (di * uu + (1.0 - di) * (1.0 - uu))
+                        * (dj * vv + (1.0 - dj) * (1.0 - vv))
+                        * (dk * ww + (1.0 - dk) * (1.0 - ww))
+                        * dot(&c, &weight_v);
+                }
+            }
+        }
+        accum
     }
 }

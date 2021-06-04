@@ -62,8 +62,8 @@ impl ply::PropertyAccess for Face {
 fn read_ply() -> HittableList {
     let mut world = HittableList::default();
     let ground_material = Material::new_metal(Color::from([0.5, 0.5, 0.5]), 0.0);
-    world.add(Shape::new_triangle(Point3::from([1000.0,0.0,0.0]),Point3::from([0.0,0.0,-1000.0]),Point3::from([0.0,0.0,1000.0]),ground_material));
-    world.add(Shape::new_triangle(Point3::from([0.0,0.0,-1000.0]),Point3::from([-1000.0,0.0,0.0]),Point3::from([0.0,0.0,1000.0]),ground_material));
+    world.add(Shape::new_triangle(Point3::from([1000.0,0.0,0.0]),Point3::from([0.0,0.0,-1000.0]),Point3::from([0.0,0.0,1000.0]),ground_material.clone()));
+    world.add(Shape::new_triangle(Point3::from([0.0,0.0,-1000.0]),Point3::from([-1000.0,0.0,0.0]),Point3::from([0.0,0.0,1000.0]),ground_material.clone()));
     let path = "assets/bunny.ply";
     let f = std::fs::File::open(path).unwrap();
     let mut f = std::io::BufReader::new(f);
@@ -84,7 +84,7 @@ fn read_ply() -> HittableList {
     }
     let cube_mat = Material::new_lambertian(Color::from([0.7,0.2,0.1]));
     for fc in face_list.iter() {
-        world.add(Shape::new_triangle(vertex_list[fc.vertex_index[0] as usize]*10.0,vertex_list[fc.vertex_index[1] as usize]*10.0, vertex_list[fc.vertex_index[2] as usize]*10.0, cube_mat));
+        world.add(Shape::new_triangle(vertex_list[fc.vertex_index[0] as usize]*10.0,vertex_list[fc.vertex_index[1] as usize]*10.0, vertex_list[fc.vertex_index[2] as usize]*10.0, cube_mat.clone()));
     }
     world
 }

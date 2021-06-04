@@ -9,7 +9,7 @@ use crate::texture::Texture;
 
 pub trait Scatter {
     fn scatter(
-        self,
+        &self,
         r_in: &Ray,
         rec: &HitRecord,
         attenuation: &mut Color,
@@ -17,7 +17,7 @@ pub trait Scatter {
     ) -> bool;
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub enum Material {
     Lambertian(Lambertian),
     Metal(Metal),
@@ -29,8 +29,8 @@ impl Material {
         Material::Lambertian(Lambertian::new(albedo))
     }
 
-    pub fn new_noise_lamb() -> Self {
-        Material::Lambertian(Lambertian::new1())
+    pub fn new_noise_lamb(c: f64) -> Self {
+        Material::Lambertian(Lambertian::new1(c))
     }
 
     pub fn new_metal(albedo: Color, fuzz: f64) -> Self {
@@ -44,7 +44,7 @@ impl Material {
 
 impl Scatter for Material {
     fn scatter(
-        self,
+        &self,
         r_in: &Ray,
         rec: &HitRecord,
         attenuation: &mut Color,
@@ -58,7 +58,7 @@ impl Scatter for Material {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct Lambertian {
     albedo: Surface,
 }
@@ -67,12 +67,12 @@ impl Lambertian {
     fn new(albedo: Color) -> Self {
         Self { albedo: Surface::new_solid_color(albedo) }
     }
-    fn new1() -> Self { Self { albedo: Surface::new_noise_texture()} }
+    fn new1(c:f64) -> Self { Self { albedo: Surface::new_noise_texture(c)} }
 }
 
 impl Scatter for Lambertian {
     fn scatter(
-        self,
+        &self,
         _r_in: &Ray,
         rec: &HitRecord,
         attenuation: &mut Color,
@@ -85,7 +85,7 @@ impl Scatter for Lambertian {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct Metal {
     albedo: Surface,
     fuzz: f64,
@@ -102,7 +102,7 @@ impl Metal {
 
 impl Scatter for Metal {
     fn scatter(
-        self,
+        &self,
         r_in: &Ray,
         rec: &HitRecord,
         attenuation: &mut Color,
@@ -115,7 +115,7 @@ impl Scatter for Metal {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct Dielectric {
     ref_idx: f64,
 }
@@ -128,7 +128,7 @@ impl Dielectric {
 
 impl Scatter for Dielectric {
     fn scatter(
-        self,
+        &self,
         r_in: &Ray,
         rec: &HitRecord,
         attenuation: &mut Color,

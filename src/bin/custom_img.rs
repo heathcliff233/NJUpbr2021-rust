@@ -46,7 +46,7 @@ fn read_image() -> (HittableList, usize) {
     world.add(Shape::new_sphere(
         Point3::from([0.0, -1000.0, 0.0]),
         1000.0,
-        ground_material,
+        ground_material.clone(),
     ));
     let image1 = image::open("assets/1.png").unwrap();
     for a in 0..image1.width() {
@@ -58,7 +58,7 @@ fn read_image() -> (HittableList, usize) {
                 world.add(Shape::new_sphere(
                     Point3::new(a as f64 / 5.0 - 7.0, (image1.height() - b) as f64 / 5.0, 0.0),
                     0.18,
-                    sphere_material,
+                    sphere_material.clone(),
                 ));
                 cnt += 1;
             }

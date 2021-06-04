@@ -41,8 +41,8 @@ fn ray_color(r: &Ray, world: &Shape, depth: usize) -> Color {
 fn prism() -> HittableList {
     let mut world = HittableList::default();
     let ground_material = Material::new_metal(Color::from([0.7, 0.2, 0.1]), 0.7);
-    world.add(Shape::new_triangle(Point3::from([1000.0,0.0,0.0]),Point3::from([0.0,0.0,-1000.0]),Point3::from([0.0,0.0,1000.0]),ground_material));
-    world.add(Shape::new_triangle(Point3::from([0.0,0.0,-1000.0]),Point3::from([-1000.0,0.0,0.0]),Point3::from([0.0,0.0,1000.0]),ground_material));
+    world.add(Shape::new_triangle(Point3::from([1000.0,0.0,0.0]),Point3::from([0.0,0.0,-1000.0]),Point3::from([0.0,0.0,1000.0]),ground_material.clone()));
+    world.add(Shape::new_triangle(Point3::from([0.0,0.0,-1000.0]),Point3::from([-1000.0,0.0,0.0]),Point3::from([0.0,0.0,1000.0]),ground_material.clone()));
     let prism_mat = Material::new_metal(Color::from([0.5, 0.5, 0.5]), 0.2);
     let p1 = Point3::from([2.0,0.0,0.0]);
     let p2 = Point3::from([2.0,2.0,0.0]);
@@ -50,14 +50,14 @@ fn prism() -> HittableList {
     let p4 = Point3::from([0.0,0.0,0.0]);
     let p5 = Point3::from([0.0,0.0,2.0]);
     let p6 = Point3::from([0.0,2.0,2.0]);
-    world.add(Shape::new_triangle(p2,p1,p4,prism_mat));
-    world.add(Shape::new_triangle(p3,p2,p4,prism_mat));
-    world.add(Shape::new_triangle(p3,p6,p2,prism_mat));
-    world.add(Shape::new_triangle(p1,p5,p4,prism_mat));
-    world.add(Shape::new_triangle(p3,p4,p6,prism_mat));
-    world.add(Shape::new_triangle(p4,p5,p6,prism_mat));
-    world.add(Shape::new_triangle(p1,p6,p5,prism_mat));
-    world.add(Shape::new_triangle(p1,p2,p6,prism_mat));
+    world.add(Shape::new_triangle(p2,p1,p4,prism_mat.clone()));
+    world.add(Shape::new_triangle(p3,p2,p4,prism_mat.clone()));
+    world.add(Shape::new_triangle(p3,p6,p2,prism_mat.clone()));
+    world.add(Shape::new_triangle(p1,p5,p4,prism_mat.clone()));
+    world.add(Shape::new_triangle(p3,p4,p6,prism_mat.clone()));
+    world.add(Shape::new_triangle(p4,p5,p6,prism_mat.clone()));
+    world.add(Shape::new_triangle(p1,p6,p5,prism_mat.clone()));
+    world.add(Shape::new_triangle(p1,p2,p6,prism_mat.clone()));
     world
 }
 

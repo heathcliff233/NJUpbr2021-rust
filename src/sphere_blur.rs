@@ -7,7 +7,7 @@ use crate::{
 };
 use std::f64::consts::PI;
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct SphereBlur {
     center1: Point3,
     center2: Point3,

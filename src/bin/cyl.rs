@@ -77,14 +77,14 @@ fn cyl() -> HittableList {
         ground_material,
     ));
     */
-    world.add(Shape::new_triangle(Point3::from([1000.0,0.0,0.0]),Point3::from([0.0,0.0,-1000.0]),Point3::from([0.0,0.0,1000.0]),ground_material));
-    world.add(Shape::new_triangle(Point3::from([0.0,0.0,-1000.0]),Point3::from([-1000.0,0.0,0.0]),Point3::from([0.0,0.0,1000.0]),ground_material));
+    world.add(Shape::new_triangle(Point3::from([1000.0,0.0,0.0]),Point3::from([0.0,0.0,-1000.0]),Point3::from([0.0,0.0,1000.0]),ground_material.clone()));
+    world.add(Shape::new_triangle(Point3::from([0.0,0.0,-1000.0]),Point3::from([-1000.0,0.0,0.0]),Point3::from([0.0,0.0,1000.0]),ground_material.clone()));
 
     let cyl_mat = Material::new_metal(Color::from([0.8, 0.6, 0.4]), 0.1);
     //world.add(Shape::new_cylinder(1.0,1.0,cyl_mat));
-    world.add(Shape::new_sphere(Vec3::from([0.0, 1.0, 0.0]), 1.0, cyl_mat));
-    world.add(Shape::new_sphere_blur(Vec3::from([0.5, 0.3, -0.5]), Vec3::from([1.0,0.3,-0.5]),0.3,cyl_mat,0.0,1.0));
-    world.add(Shape::new_sphere(Vec3::from([4.0, 0.3,-2.0]), 0.3, cyl_mat));
+    world.add(Shape::new_sphere(Vec3::from([0.0, 1.0, 0.0]), 1.0, Material::new_noise_lamb(4.0)));
+    world.add(Shape::new_sphere_blur(Vec3::from([0.5, 0.3, -0.5]), Vec3::from([1.0,0.3,-0.5]),0.3,cyl_mat.clone(),0.0,1.0));
+    world.add(Shape::new_sphere(Vec3::from([4.0, 0.3,-2.0]), 0.3, cyl_mat.clone()));
     world
 }
 
@@ -117,9 +117,9 @@ pub struct Pixel {
     b: u32,
 }
 const ASPECT_RATIO: f64 = 16.0 / 9.0;
-const IMAGE_WIDTH: u32 = 1200;
+const IMAGE_WIDTH: u32 = 12000;
 const IMAGE_HEIGHT: u32 = ((IMAGE_WIDTH as f64) / ASPECT_RATIO) as u32;
-const SAMPLES_PER_PIXEL: usize = 20;
+const SAMPLES_PER_PIXEL: usize = 50;
 const MAX_DEPTH: usize = 50;
 
 fn main() {

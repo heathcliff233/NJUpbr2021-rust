@@ -43,7 +43,7 @@ fn random_scene() -> HittableList {
     world.add(Shape::new_sphere(
         Point3::from([0.0, -1000.0, 0.0]),
         1000.0,
-        ground_material,
+        ground_material.clone(),
     ));
 
     for a in -11..11 {
@@ -66,19 +66,19 @@ fn random_scene() -> HittableList {
                 } else {
                     Material::new_dielectric(1.5)
                 };
-                world.add(Shape::new_sphere(center, 0.2, sphere_material));
+                world.add(Shape::new_sphere(center, 0.2, sphere_material.clone()));
             }
         }
     }
 
     let material_1 = Material::new_dielectric(1.5);
-    world.add(Shape::new_sphere(Point3::from([0.0, 1.0, 0.0]), 1.0, material_1));
+    world.add(Shape::new_sphere(Point3::from([0.0, 1.0, 0.0]), 1.0, material_1.clone()));
 
     let material_2 = Material::new_lambertian(Color::from([0.4, 0.2, 0.1]));
-    world.add(Shape::new_sphere(Point3::from([-4.0, 1.0, 0.0]), 1.0, material_2));
+    world.add(Shape::new_sphere(Point3::from([-4.0, 1.0, 0.0]), 1.0, material_2.clone()));
 
     let material_3 = Material::new_metal(Color::from([0.7, 0.6, 0.5]), 0.0);
-    world.add(Shape::new_sphere(Point3::from([4.0, 1.0, 0.0]), 1.0, material_3));
+    world.add(Shape::new_sphere(Point3::from([4.0, 1.0, 0.0]), 1.0, material_3.clone()));
 
     world
 }

@@ -8,7 +8,7 @@ pub trait Texture {
     fn value(&self, u:f64, v:f64, p:&Vec3) -> Color;
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub enum Surface {
     SolidColor(SolidColor),
     TestTexture(TestTexture),
@@ -18,7 +18,7 @@ pub enum Surface {
 impl Surface {
     pub fn new_solid_color(c:Color) -> Self {Surface::SolidColor(SolidColor::new(c))}
     pub fn new_test_texture(c:Color) -> Self {Surface::TestTexture(TestTexture::new(c))}
-    pub fn new_noise_texture() -> Self {Surface::NoiseTexture(NoiseTexture::new())}
+    pub fn new_noise_texture(c:f64) -> Self {Surface::NoiseTexture(NoiseTexture::new(c))}
 }
 
 impl Texture for Surface {
@@ -31,7 +31,7 @@ impl Texture for Surface {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct SolidColor{
     pub color_value: Color,
 }
@@ -59,7 +59,7 @@ impl Texture for SolidColor {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct TestTexture {
     pub color1: Color,
     pub color2: Color,
@@ -91,21 +91,36 @@ impl Texture for TestTexture {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct NoiseTexture {
     pub noise: Perlin,
+    pub scale: f64,
 }
 
 impl NoiseTexture {
-    pub fn new() -> Self {
+    pub fn new(scale: f64) -> Self {
         return Self {
             noise: Perlin::new(),
+            scale: scale,
         };
+    }
+
+    fn turb(&self, p: &Vec3, depth: u32) -> f64 {
+        let mut accum = 0.0;
+        let mut p = (*p).clone();
+        let mut weight = 1.0;
+        for _i in 0..depth {
+            accum += self.noise.noise(&p) * weight;
+            weight *= 0.5;
+            p = p * 2.0;
+        }
+        accum.abs()
     }
 }
 
 impl Texture for NoiseTexture {
     fn value(&self, u:f64, v:f64, p:&Vec3) -> Vec3 {
-        return Vec3::ones() * self.noise.noise(p);
+        //return Vec3::ones() * self.noise.noise(p);
+        Vec3::new(1.0, 1.0, 1.0) * 0.5 * (1.0 + (self.scale * p.z + 10.0 * self.turb(p, 7)).sin())
     }
 }

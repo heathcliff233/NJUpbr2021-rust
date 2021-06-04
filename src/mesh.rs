@@ -8,7 +8,7 @@ use crate::{
 };
 use std::f64::consts::PI;
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct Mesh {
     a0: Point3,
     a1: Point3,

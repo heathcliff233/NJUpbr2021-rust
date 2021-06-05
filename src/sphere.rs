@@ -6,6 +6,7 @@ use crate::{
     aabb::Aabb
 };
 use std::f64::consts::PI;
+use std::f64::INFINITY;
 
 #[derive(Clone)]
 pub struct Sphere {
@@ -65,4 +66,15 @@ impl Hittable for Sphere {
         output_box.modify(self.center-r, self.center+r);
         return true
     }
+
+    fn pdf_value(&self, origin: Point3, direction: Point3, time: f64) -> f64 {
+        let mut rec = HitRecord::new(Material::new_lambertian(Point3::zero()));
+        if !self.hit(&Ray::new(origin, direction, time), 0.001, INFINITY, &mut rec) {
+            0.0
+        } else {
+            let cos_theta_max = (1 - self.radius * self.radius / (origin - self.center).length_squared()).sqrt();
+            return 1 / (2.0 * PI * (1 - cos_theta_max))
+        }
+    }
+
 }

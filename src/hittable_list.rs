@@ -1,22 +1,22 @@
 use crate::{
     hittable::{HitRecord, Hittable, Shape},
     ray::Ray,
-    aabb::{Aabb, surrounding_box}
+    aabb::{Aabb, surrounding_box},
+    vec3::Vec3,
+    random_double
 };
 //use std::sync::Arc;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct HittableList {
     pub objects: Vec<Shape>,
 }
 
-impl HittableList {
-    pub fn add(&mut self, object: Shape) {
+impl Hittable for HittableList {
+    fn add(&mut self, object: Shape) {
         self.objects.push(object);
     }
-}
 
-impl Hittable for HittableList {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool {
         let mut tmp_rec = rec.clone();
         let mut hit_anything = false;
@@ -45,6 +45,22 @@ impl Hittable for HittableList {
         }
 
         true
+    }
+
+    fn pdf_value(&self, origin: Vec3, direction: Vec3, time: f64) -> f64 {
+        let weight = 1.0 / self.objects.len() as f64;
+        let mut sum = 0.0;
+
+        self.objects.iter().for_each(|object|{
+            sum += weight * object.pdf_value(origin, direction, time);
+        });
+
+        sum
+    }
+
+    fn random(&self, origin: Vec3) -> Vec3 {
+        let id = (random_double!() * (self.objects.len() as f64)) as usize;
+        self.objects[id].random(origin)
     }
 
 }

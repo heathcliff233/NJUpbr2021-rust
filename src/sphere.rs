@@ -1,9 +1,11 @@
 use crate::{
-    hittable::{HitRecord, Hittable},
+    hittable::{HitRecord, Hittable, Shape},
     material::Material,
     ray::Ray,
     vec3::{dot, Point3},
-    aabb::Aabb
+    aabb::Aabb,
+    onb::ONB,
+    random_double
 };
 use std::f64::consts::PI;
 use std::f64::INFINITY;
@@ -72,9 +74,30 @@ impl Hittable for Sphere {
         if !self.hit(&Ray::new(origin, direction, time), 0.001, INFINITY, &mut rec) {
             0.0
         } else {
-            let cos_theta_max = (1 - self.radius * self.radius / (origin - self.center).length_squared()).sqrt();
-            return 1 / (2.0 * PI * (1 - cos_theta_max))
+            let cos_theta_max = (1.0 - self.radius * self.radius / (origin - self.center).length_squared()).sqrt();
+            return 1.0 / (2.0 * PI * (1.0 - cos_theta_max))
         }
     }
 
+    fn random(&self, origin: Point3) -> Point3 {
+        let direction = self.center - origin;
+        let dist_squared = direction.length_squared();
+        let uvw = ONB::build_from_w(direction);
+        uvw.local(random_to_sphere(self.radius, dist_squared))
+    }
+
+    fn add(&mut self, obj: Shape) {}
+
+}
+
+pub fn random_to_sphere(radius: f64, dist_squared: f64) -> Point3 {
+    let r1 = random_double!();
+    let r2 = random_double!();
+    let z = 1.0 + r2 * ((1.0 - radius * radius / dist_squared).sqrt() - 1.0);
+
+    let phi = 2.0 * PI * r1;
+    let x = phi.cos() * (1.0 - z * z).sqrt();
+    let y = phi.sin() * (1.0 - z * z).sqrt();
+
+    Point3::new(x, y, z)
 }

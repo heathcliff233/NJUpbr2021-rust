@@ -1,7 +1,8 @@
 use crate::{
     hittable::{HitRecord, Hittable, Shape},
     ray::Ray,
-    aabb::{Aabb, surrounding_box}
+    aabb::{Aabb, surrounding_box},
+    vec3::Point3,
 };
 use rand::Rng;
 use std::cmp::Ordering;
@@ -111,4 +112,14 @@ impl Hittable for BvhNode {
         *output_box = self.bbox.clone();
         true
     }
+
+    fn pdf_value(&self, origin: Point3, direction: Point3, time: f64) -> f64 {
+        0.0
+    }
+    fn random(&self, origin: Point3) -> Point3 {
+        Point3::ones()
+    }
+
+    fn add(&mut self, obj: Shape) {}
+
 }

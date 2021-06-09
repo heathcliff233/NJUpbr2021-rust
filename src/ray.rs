@@ -1,5 +1,6 @@
 use crate::vec3::{Point3, Vec3};
 
+#[derive(Clone)]
 pub struct Ray {
     pub origin: Point3,
     pub direction: Vec3,
@@ -12,6 +13,14 @@ impl Ray {
             origin,
             direction,
             time,
+        }
+    }
+
+    pub fn init() -> Self {
+        Self {
+            origin: Point3::zero(),
+            direction: Vec3::zero(),
+            time: 0.001,
         }
     }
 

@@ -3,18 +3,37 @@ use crate::{
     random_double,
     ray::Ray,
     texture::Surface,
-    vec3::{dot, random_in_unit_sphere, random_unit_vector, reflect, refract, unit_vector, Color},
+    vec3::{dot, random_in_unit_sphere, random_unit_vector, reflect, refract, unit_vector, Color, Vec3},
+    pdf::PDF,
 };
 use crate::texture::Texture;
+use crate::pdf::{CosinePDF,ZeroPDF};
+use std::f64::consts::PI;
+use itertools::Diff;
 
 pub trait Scatter {
     fn scatter(
         &self,
         r_in: &Ray,
         rec: &HitRecord,
-        attenuation: &mut Color,
-        scattered: &mut Ray,
+        srec: &mut ScatterRecord,
     ) -> bool;
+
+    fn scatter_pdf(
+        &self,
+        ray: &Ray,
+        rec: &HitRecord,
+        scattered: &Ray
+    ) -> f64;
+
+    fn emit(
+        &self,
+        ray: &Ray,
+        hit_record: &HitRecord,
+        u: f64,
+        v: f64,
+        p: Color,
+    ) -> Color;
 }
 
 #[derive(Clone)]
@@ -22,6 +41,7 @@ pub enum Material {
     Lambertian(Lambertian),
     Metal(Metal),
     Dielectric(Dielectric),
+    Diffuse(Diffuse),
 }
 
 impl Material {
@@ -42,6 +62,10 @@ impl Material {
     pub fn new_dielectric(ref_idx: f64) -> Self {
         Material::Dielectric(Dielectric::new(ref_idx))
     }
+
+    pub fn new_diffuse(c: Vec3) -> Self {
+        Material::Diffuse(Diffuse::new1(c))
+    }
 }
 
 impl Scatter for Material {
@@ -49,15 +73,44 @@ impl Scatter for Material {
         &self,
         r_in: &Ray,
         rec: &HitRecord,
-        attenuation: &mut Color,
-        scattered: &mut Ray,
+        srec: &mut ScatterRecord,
     ) -> bool {
         match self {
-            Material::Lambertian(m) => m.scatter(r_in, rec, attenuation, scattered),
-            Material::Metal(m) => m.scatter(r_in, rec, attenuation, scattered),
-            Material::Dielectric(m) => m.scatter(r_in, rec, attenuation, scattered),
+            Material::Lambertian(m) => m.scatter(r_in, rec, srec),
+            Material::Metal(m) => m.scatter(r_in, rec, srec),
+            Material::Dielectric(m) => m.scatter(r_in, rec, srec),
+            Material::Diffuse(m) => m.scatter(r_in, rec, srec),
         }
     }
+
+    fn scatter_pdf(
+        &self,
+        ray: &Ray,
+        rec: &HitRecord,
+        scattered: &Ray
+    ) -> f64 {
+        match self {
+            Material::Lambertian(m) => m.scatter_pdf(ray, rec, scattered),
+            Material::Metal(m) => m.scatter_pdf(ray, rec, scattered),
+            Material::Dielectric(m) => m.scatter_pdf(ray, rec, scattered),
+            Material::Diffuse(m) => m.scatter_pdf(ray, rec, scattered),
+        }
+    }
+
+    fn emit(
+        &self,
+        ray: &Ray,
+        hit_record: &HitRecord,
+        u: f64,
+        v: f64,
+        p: Color,
+    ) -> Color {
+        match self {
+            Material::Diffuse(m) => m.emit(ray, hit_record, u, v, p),
+            _ => Color::zero(),
+        }
+    }
+
 }
 
 #[derive(Clone)]
@@ -78,15 +131,26 @@ impl Scatter for Lambertian {
         &self,
         _r_in: &Ray,
         rec: &HitRecord,
-        attenuation: &mut Color,
-        scattered: &mut Ray,
+        srec: &mut ScatterRecord
     ) -> bool {
-        let scatter_direction = rec.normal + random_unit_vector();
-        *scattered = Ray::new(rec.p, scatter_direction, 0.0);
-        *attenuation = self.albedo.value(rec.u, rec.v, &rec.p);
+        srec.material_type = MaterialType::Diffuse;
+        srec.specular_ray = Ray::init();
+        srec.attenuation = self.albedo.value(rec.u, rec.v, &rec.p);
+        srec.pdf_ptr = CosinePDF::new(rec.normal);
         true
     }
+
+    fn scatter_pdf(&self, ray: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
+        let cosine = dot(&rec.normal, &unit_vector(scattered.direction));
+        if cosine < 0.0 { 0.0 } else { cosine / PI }
+    }
+
+    fn emit(&self, ray: &Ray, rec: &HitRecord, u:f64, v:f64, p:Vec3) -> Color {
+        Color::zero()
+    }
+
 }
+
 
 #[derive(Clone)]
 pub struct Metal {
@@ -108,13 +172,63 @@ impl Scatter for Metal {
         &self,
         r_in: &Ray,
         rec: &HitRecord,
-        attenuation: &mut Color,
-        scattered: &mut Ray,
+        srec: &mut ScatterRecord,
     ) -> bool {
         let reflected = reflect(unit_vector(r_in.direction), rec.normal);
-        *scattered = Ray::new(rec.p, reflected + self.fuzz * random_in_unit_sphere(), 0.0);
-        *attenuation = self.albedo.value(rec.u, rec.v, &rec.p);
-        dot(&scattered.direction, &rec.normal) > 0.0
+
+        srec.specular_ray = Ray::new(rec.p, reflected + self.fuzz * random_in_unit_sphere(), 0.0);
+        srec.attenuation = self.albedo.value(rec.u, rec.v, &rec.p);
+        srec.material_type = MaterialType::Specular;
+        srec.pdf_ptr = ZeroPDF::new();
+        dot(&srec.specular_ray.direction, &rec.normal) > 0.0
+    }
+
+    fn scatter_pdf(&self, ray: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
+        0.0
+    }
+
+    fn emit(&self, ray: &Ray, rec: &HitRecord, u:f64, v:f64, p:Vec3) -> Color {
+        Color::zero()
+    }
+
+}
+
+#[derive(Clone)]
+pub struct Diffuse {
+    shine: Surface,
+}
+impl Diffuse {
+    fn new(shine: Surface) -> Self {
+        Self { shine }
+    }
+    fn new1(col: Color) -> Self {
+        Self {
+            shine: Surface::new_solid_color(col),
+        }
+    }
+}
+
+impl Scatter for Diffuse {
+    fn scatter(
+        &self,
+        r_in: &Ray,
+        rec: &HitRecord,
+        srec: &mut ScatterRecord,
+    ) -> bool { false }
+
+    fn scatter_pdf(
+        &self,
+        ray: &Ray,
+        rec: &HitRecord,
+        scattered: &Ray
+    ) -> f64 { 0.0 }
+
+    fn emit(&self, ray: &Ray, rec: &HitRecord, u:f64, v:f64, p:Vec3) -> Color {
+        if rec.front_face {
+            self.shine.value(u, v, &p)
+        } else {
+            Color::zero()
+        }
     }
 }
 
@@ -134,10 +248,9 @@ impl Scatter for Dielectric {
         &self,
         r_in: &Ray,
         rec: &HitRecord,
-        attenuation: &mut Color,
-        scattered: &mut Ray,
+        srec: &mut ScatterRecord
     ) -> bool {
-        *attenuation = Color::ones();
+        srec.attenuation = Color::ones();
         let etai_over_etat = if rec.front_face {
             1.0 / self.ref_idx
         } else {
@@ -146,7 +259,7 @@ impl Scatter for Dielectric {
         let unit_direction = unit_vector(r_in.direction);
         let cos_theta = f64::min(dot(&-unit_direction, &rec.normal), 1.0);
         let sin_theta = f64::sqrt(1.0 - cos_theta.powi(2));
-        *scattered = if etai_over_etat * sin_theta > 1.0
+        srec.specular_ray = if etai_over_etat * sin_theta > 1.0
             || random_double!() < schlick(cos_theta, etai_over_etat)
         {
             let reflected = reflect(unit_direction, rec.normal);
@@ -155,8 +268,31 @@ impl Scatter for Dielectric {
             let refracted = refract(unit_direction, rec.normal, etai_over_etat);
             Ray::new(rec.p, refracted, 0.0)
         };
+        srec.material_type = MaterialType::Specular;
+        srec.pdf_ptr = ZeroPDF::new();
         true
     }
+
+    fn scatter_pdf(&self, ray: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
+        0.0
+    }
+
+    fn emit(&self, ray: &Ray, rec: &HitRecord, u:f64, v:f64, p:Vec3) -> Color {
+        Color::zero()
+    }
+}
+
+
+pub enum MaterialType {
+    Diffuse,
+    Specular,
+}
+
+pub struct ScatterRecord<'a> {
+    pub material_type: MaterialType,
+    pub specular_ray: Ray,
+    pub attenuation: Color,
+    pub pdf_ptr: PDF<'a>,
 }
 
 fn schlick(cosine: f64, ref_idx: f64) -> f64 {

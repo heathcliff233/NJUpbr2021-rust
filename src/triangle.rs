@@ -1,12 +1,14 @@
 use crate::{
-    hittable::{HitRecord, Hittable},
+    hittable::{HitRecord, Hittable, Shape},
     material::Material,
     ray::Ray,
     vec3::{dot, Point3, unit_vector, cross},
     aabb::Aabb,
-    utils::{fmax, fmin}
+    utils::{fmax, fmin},
+    random_double,
 };
 use std::f64::consts::PI;
+use std::f64::INFINITY;
 
 #[derive(Clone)]
 pub struct Triangle {
@@ -69,4 +71,30 @@ impl Hittable for Triangle {
         true
 
     }
+
+    fn pdf_value(&self, origin: Point3, direction: Point3, time: f64) -> f64 {
+        let mut rec = HitRecord::new(Material::new_lambertian(Point3::zero()));
+        let center = (self.a0 + self.a1 + self.a2) / 3.0;
+        let radius = (self.a0 - center).length();
+        if !self.hit(&Ray::new(origin, direction, time), 0.001, INFINITY, &mut rec) {
+            0.0
+        } else {
+            let cos_theta_max = (1.0 - radius * radius / (origin - center).length_squared()).sqrt();
+            return 1.0 / (4.0 * PI * (1.0 - cos_theta_max))
+        }
+    }
+
+    fn random(&self, origin: Point3) -> Point3 {
+        let p1 = random_double!();
+        let p2 = p1.sqrt();
+        let chosen = prop(self.a0, self.a1, p2) + prop(self.a1, self.a2, p1);
+        chosen - origin
+    }
+
+    fn add(&mut self, obj: Shape) {}
+
+}
+
+pub fn prop(origin: Point3, dest: Point3, p: f64) -> Point3 {
+    origin + p * (dest - origin)
 }
